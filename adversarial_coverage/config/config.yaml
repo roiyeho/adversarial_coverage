@@ -1,0 +1,12 @@
+random_seed: 1         # for restoring the generated map settings
+map_size:
+	rows: 20
+	cols: 20
+obstacle_ratio: 0.2    # percentage of squares that are occupied by obstacles  
+obstacles_areas: 0     # if 0, then obtsacles are randomly scattered
+threat_ratio: 0.3      # percentage of squares that contain threats
+threat_levels: 5       
+dangerous_areas: 10    # if 0, then threats are randomly scattered
+max_threat_prob: 0.05  # the maximum probability of any threat stopping the robot
+risk_factor: 1.0       # tradeoff between risk and time
+robots_num: 1
