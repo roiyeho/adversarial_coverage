@@ -1,0 +1,44 @@
+generate_objects_randomly.py:
+
+INPUT:
+config.yaml
+
+	random_seed: X		# for restoring the generated map settings
+	map_size:
+	    rows: X
+	    cols: X
+	obstacle_ratio: X	# ration of squares that are occupied by obstacles
+	obstacles_areas: X 	# if 0, then obtsacles are randomly scattered
+	threat_ratio: X		# ration of squares that contain threats
+	threat_levels: X
+	threat_areas: X 	# if 0, then threats are randomly scattered
+	max_threat_prob: X	# the maximum probability of any threat stopping the robot
+	risk_factor: X 		# tradeoff between risk and time
+	robots_num: X
+
+OUTPUT:
+input.yaml
+
+	mapXsize:
+	  cols: X
+	  rows: X
+	max_threat_prob: X
+	obstacles:		# random obstacles as described in the 'config.yaml' file
+	  ID:
+	    num_cols: X
+	    num_rows: X
+	    start_col: X
+	    start_row: X
+	  ID:
+	    ...
+	risk_factor: X
+	robots_num: X
+	threats:		# random threats as described in the 'config.yaml' file
+	  ID:
+	    level: X
+	    start_col: X
+	    start_row: X
+
+This file should be used as input for 2 more scripts:
+*)  generate_world - Generate world file for gazebo
+*)  generate_map   - Generate map (pgm + yaml)
