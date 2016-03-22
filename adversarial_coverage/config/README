@@ -7,9 +7,9 @@ config.yaml
 	map_size:
 	    rows: X
 	    cols: X
-	obstacle_ratio: X	# ration of squares that are occupied by obstacles
+	obstacle_ratio: X	# ratio of squares that are occupied by obstacles
 	obstacles_areas: X 	# if 0, then obtsacles are randomly scattered
-	threat_ratio: X		# ration of squares that contain threats
+	threat_ratio: X		# ratio of squares that contain threats
 	threat_levels: X
 	threat_areas: X 	# if 0, then threats are randomly scattered
 	max_threat_prob: X	# the maximum probability of any threat stopping the robot
