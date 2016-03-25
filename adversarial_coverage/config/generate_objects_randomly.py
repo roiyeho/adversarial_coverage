@@ -2,11 +2,17 @@
 
 import yaml
 import random
+import hashlib
+import os
 
 def main():
     # Read config file
+
+    config_file_path = os.path.dirname(__file__)
+    config_file_name = "config.yaml"
+
     try:
-        with open("config.yaml", "r") as config_input_file:
+        with open(os.path.join(config_file_path, config_file_name), "r") as config_input_file:
             try:
                 config_params = yaml.load(config_input_file)
             except yaml.YAMLError as exc:
@@ -173,11 +179,17 @@ def main():
             level       = t[2],
         )
 
+    hasher = hashlib.md5()
+    with open(os.path.join(config_file_path, config_file_name), "rb") as config_input_file:
+        for chunk in iter(lambda: config_input_file.read(4096), b""):
+            hasher.update(chunk)
+
+    objects["id"]               = hasher.hexdigest()
     objects["max_threat_prob"]  = config_params["max_threat_prob"]
     objects["risk_factor"]      = config_params["risk_factor"]
     objects["robots_num"]       = config_params["robots_num"]
 
-    with open("input.yaml", "w") as config_output_file:
+    with open(os.path.join(config_file_path, "input.yaml"), "w") as config_output_file:
         config_output_file.write(yaml.dump(objects, default_flow_style=False))
 
 if __name__ == "__main__":

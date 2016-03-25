@@ -5,9 +5,9 @@ map_size:
 obstacle_ratio: 0.3    # ratio of squares that are occupied by obstacles
 obstacles_areas: 0     # if 0, then obtsacles are randomly scattered
 obstacles_shapes:      # ratio of the different types of obstacles
-  square: 0.3
-  linear: 0.6
-  isolated: 0.1
+  square: 0.0
+  linear: 0.0
+  isolated: 0.0
 threat_ratio: 0.3      # ratio of squares that contain threats
 threat_levels: 5       
 threats_areas: 0        # if 0, then threats are randomly scattered

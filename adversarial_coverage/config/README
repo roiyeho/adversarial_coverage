@@ -42,3 +42,11 @@ input.yaml
 This file should be used as input for 2 more scripts:
 *)  generate_world - Generate world file for gazebo
 *)  generate_map   - Generate map (pgm + yaml)
+
+generate_world.py:
+
+INPUT:
+input.yaml
+
+OUTPUT:
+world file
