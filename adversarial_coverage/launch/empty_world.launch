@@ -1,9 +1,9 @@
 <launch>
-  <env name="GAZEBO_MODEL_PATH" value="$(find adversarial_coverage)/models"/>
   <arg name="world" default="$(find adversarial_coverage)/worlds/empty.world"/>
+
   <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(arg world)"/>
-    <!-- more default parameters can be changed here -->
   </include>
+
 </launch>
