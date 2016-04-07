@@ -5,6 +5,7 @@ import random
 import hashlib
 import os
 
+
 def main():
     # Read config file
 
@@ -22,9 +23,6 @@ def main():
 
     random.seed(config_params["random_seed"])
 
-    from datetime import datetime
-    random.seed(datetime.now())
-
     assert config_params["obstacle_ratio"] + config_params["threat_ratio"] < 1, "Too much obstacles and threats"
 
     # Generate grid
@@ -40,100 +38,99 @@ def main():
     #   j = column index
     #   r = numbers of rows
     #   c = number of columns
+    config_params["obstacles_areas"] = int(config_params["obstacles_areas"])
     if config_params["obstacles_areas"] == 0:
         obstacles = random.sample([(i, j, 1, 1) for j in range(config_params["map_size"]["cols"])
-                                                for i in range(config_params["map_size"]["rows"])],
-                                    num_of_obstacle_cells)
+                                   for i in range(config_params["map_size"]["rows"])],
+                                  num_of_obstacle_cells)
 
         for o in obstacles:
             grid[o[0]][o[1]] = -1
     else:
-        assert sum(config_params["obstacles_shapes"].itervalues()) < 1, \
-            "sum of different types of obstacles should be less then one"
-
-        if config_params["obstacles_shapes"]["square"] != 0:
-            assert config_params["obstacles_areas"] < \
-                   min(config_params["map_size"]["rows"], config_params["map_size"]["cols"]) // 2, \
-                "obstacles_areas must be smaller then half of the map small dimension (square obstacles)"
-
-        if config_params["obstacles_shapes"]["linear"] != 0:
-            assert config_params["obstacles_areas"] < \
-                   min(config_params["map_size"]["rows"], config_params["map_size"]["cols"]) / 3, \
-                "obstacles_areas must be smaller then third of the map small dimension (linear obstacles)"
-
-        num_of_squared_obstacles = (num_of_obstacle_cells * \
-                                    config_params["obstacles_shapes"]["square"]) // \
-                                   (config_params["obstacles_areas"] ** 2)
-
-        num_of_linear_obstacles = (num_of_obstacle_cells * \
-                                   config_params["obstacles_shapes"]["linear"]) // \
-                                  int(config_params["obstacles_areas"] * 2)
-
-        num_of_isolated_obstacles = (num_of_obstacle_cells * \
-                                     config_params["obstacles_shapes"]["isolated"])
-
-        num_of_squared_obstacles    = int(num_of_squared_obstacles)
-        num_of_linear_obstacles     = int(num_of_linear_obstacles)
-        num_of_isolated_obstacles     = int(num_of_isolated_obstacles)
-
         obstacles = []
+        remaining_obstacles = num_of_obstacle_cells // int(config_params["obstacles_areas"])
 
-        # Generate square obstacles
-        while num_of_squared_obstacles > 0:
-            flag = False
+        while remaining_obstacles != 0:
+            r = random.randint(1, config_params["obstacles_areas"])
+            c = config_params["obstacles_areas"] // r
+            q = config_params["obstacles_areas"] - (r * c)
 
-            while not flag:
-                l = random.randint(3, config_params["obstacles_areas"])
+            rr = 0
+            cc = 0
+            s = 0
+            t = 0
 
-                i = random.randint(0, config_params["map_size"]["rows"] - l - 1)
-                j = random.randint(0, config_params["map_size"]["cols"] - l - 1)
+            tries = 5
 
-                flag = all([grid[i + m][j + n] == 0
-                            for m in range(l) for n in range(l)])
+            while True:
+                tries -= 1
 
-            obstacles.append((i, j, l, l))
+                if tries == 0:
+                    break
 
-            for m in range(l):
-                for n in range(l):
-                    grid[i + m][j + n] = -1
+                i = random.randint(0, config_params["map_size"]["rows"] - r)
+                j = random.randint(0, config_params["map_size"]["cols"] - c)
 
-            num_of_squared_obstacles -= 1
-
-        # Generate linear obstacles
-        while num_of_linear_obstacles > 0:
-            flag = False
-
-            while not flag:
-                l = random.randint(1, config_params["obstacles_areas"] * 2)
-
-                # Randomize direction
-                d = random.randint(0, 1)
-
-                i = random.randint(0, config_params["map_size"]["rows"] - 1)
-                j = random.randint(0, config_params["map_size"]["cols"] - 1)
-
-                if d == 0 and (i + l >= config_params["map_size"]["rows"]):
-                    continue
-                if d == 1 and (j + l >= config_params["map_size"]["cols"]):
+                if not all([grid[i + k][j + l] == 0 for k in range(r) for l in range(c)]):
                     continue
 
-                flag = all([grid[i + (1 - d)*m][j + d*m] == 0 for m in range(l)])
+                if q == 0:
+                    break
 
-            obstacles.append((i, j, 1 * d + l * (1 - d), 1 * (1 - d) + l * d))
+                if r > c:
+                    s = random.randint(2, 3)
+                elif r < c:
+                    s = random.randint(0, 1)
+                else:
+                    s = random.randint(0, 3)
 
-            for m in range(l):
-                grid[i + (1 - d)*m][j + d*m] = -1
+                if s == 0 or s == 1:
+                    t = random.randint(0, c - q)
+                    if s == 0:
+                        rr = i - 1
+                    elif s == 1:
+                        rr = i + r
+                    if rr < 0 or rr >= config_params["map_size"]["rows"]:
+                        continue
 
-            num_of_linear_obstacles -= 1
+                    if not all([grid[rr][j + t + l] == 0 for l in range(q)]):
+                        continue
+                elif s == 2 or s == 3:
+                    t = random.randint(0, r - q)
+                    if s == 2:
+                        cc = j - 1
+                    elif s == 3:
+                        cc = j + c
+                    if cc < 0 or cc >= config_params["map_size"]["cols"]:
+                        continue
 
-        # Generate isolated obstacles
-        print num_of_isolated_obstacles
-        for o in random.sample([(i, j) for j in range(config_params["map_size"]["cols"])
-                                        for i in range(config_params["map_size"]["rows"])
-                                        if grid[i][j] == 0],
-                                num_of_isolated_obstacles):
-            obstacles.append((o[0], o[1], 1, 1))
-            grid[o[0]][o[1]] = -1
+                    if not all([grid[i + t + l][cc] == 0 for l in range(q)]):
+                        continue
+
+                break
+
+            if tries == 0:
+                continue
+
+            obstacles.append((i, j, r, c))
+            for k in range(r):
+                for l in range(c):
+                    grid[i + k][j + l] = -1
+
+            if q != 0:
+                if s == 0 or s == 1:
+                    obstacles.append((rr, j + t, 1, q))
+                    for k in range(q):
+                        grid[rr][j + t + k] = -1
+                elif s == 2 or s == 3:
+                    obstacles.append((i + t, cc, q, 1))
+                    for k in range(q):
+                        grid[i + t + k][cc] = -1
+
+            remaining_obstacles -= 1
+
+            if remaining_obstacles == 1: # Last obstacle
+                config_params["obstacles_areas"] += num_of_obstacle_cells % int(config_params["obstacles_areas"])
 
     # Generate threats
     num_of_threat_cells = int(config_params["map_size"]["rows"] * \
@@ -146,51 +143,53 @@ def main():
     #   l = threat level
     if config_params["threats_areas"] == 0:
         threats = random.sample([(i, j, random.randint(1, config_params["threat_levels"]))
-                                        for j in range(config_params["map_size"]["cols"])
-                                        for i in range(config_params["map_size"]["rows"]) if grid[i][j] == 0],
-                                        num_of_threat_cells)
+                                 for j in range(config_params["map_size"]["cols"])
+                                 for i in range(config_params["map_size"]["rows"]) if grid[i][j] == 0],
+                                num_of_threat_cells)
 
         for t in threats:
-            grid[t[0]][t[1]] = t[2]
+            pass  # grid[t[0]][t[1]] = t[2]
 
     for i in range(len(grid)):
         print "".join(["%3s" % (str(t)) for t in grid[i]])
 
-    objects = { }
+    objects = {}
     objects["map_size"] = dict(
-        rows = config_params["map_size"]["rows"],
-        cols = config_params["map_size"]["cols"]
+        rows=config_params["map_size"]["rows"],
+        cols=config_params["map_size"]["cols"]
     )
 
-    objects["obstacles"] = { }
+    objects["obstacles"] = {}
     for i, o in enumerate(obstacles):
         objects["obstacles"][i] = dict(
-            start_row   = o[0],
-            start_col   = o[1],
-            num_rows    = o[2],
-            num_cols    = o[3]
+            start_row=o[0],
+            start_col=o[1],
+            num_rows=o[2],
+            num_cols=o[3]
         )
 
-    objects["threats"] = { }
+    objects["threats"] = {}
     for i, t in enumerate(threats):
         objects["threats"][i] = dict(
-            start_row   = t[0],
-            start_col   = t[1],
-            level       = t[2],
+            start_row=t[0],
+            start_col=t[1],
+            level=t[2],
         )
+    objects["threats"] = {}
 
     hasher = hashlib.md5()
     with open(os.path.join(config_file_path, config_file_name), "rb") as config_input_file:
         for chunk in iter(lambda: config_input_file.read(4096), b""):
             hasher.update(chunk)
 
-    objects["id"]               = hasher.hexdigest()
-    objects["max_threat_prob"]  = config_params["max_threat_prob"]
-    objects["risk_factor"]      = config_params["risk_factor"]
-    objects["robots_num"]       = config_params["robots_num"]
+    objects["id"] = hasher.hexdigest()
+    objects["max_threat_prob"] = config_params["max_threat_prob"]
+    objects["risk_factor"] = config_params["risk_factor"]
+    objects["robots_num"] = config_params["robots_num"]
 
     with open(os.path.join(config_file_path, "input.yaml"), "w") as config_output_file:
         config_output_file.write(yaml.dump(objects, default_flow_style=False))
+
 
 if __name__ == "__main__":
     main()
