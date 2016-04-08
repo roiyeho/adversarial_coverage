@@ -148,8 +148,95 @@ def main():
                                 num_of_threat_cells)
 
         for t in threats:
-            pass  # grid[t[0]][t[1]] = t[2]
+            grid[t[0]][t[1]] = t[2]
+    else:
+        threats = []
+        remaining_threats = num_of_threat_cells // int(config_params["threats_areas"])
 
+        while remaining_threats != 0:
+	    level = random.randint(1, config_params["threat_levels"])
+            r = random.randint(1, config_params["threats_areas"])
+            c = config_params["threats_areas"] // r
+            q = config_params["threats_areas"] - (r * c)
+
+            rr = 0
+            cc = 0
+            s = 0
+            t = 0
+
+            tries = 5
+
+            while True:
+                tries -= 1
+
+                if tries == 0:
+                    break
+
+                i = random.randint(0, config_params["map_size"]["rows"] - r)
+                j = random.randint(0, config_params["map_size"]["cols"] - c)
+
+                if not all([grid[i + k][j + l] == 0 for k in range(r) for l in range(c)]):
+                    continue
+
+                if q == 0:
+                    break
+
+                if r > c:
+                    s = random.randint(2, 3)
+                elif r < c:
+                    s = random.randint(0, 1)
+                else:
+                    s = random.randint(0, 3)
+
+                if s == 0 or s == 1:
+                    t = random.randint(0, c - q)
+                    if s == 0:
+                        rr = i - 1
+                    elif s == 1:
+                        rr = i + r
+                    if rr < 0 or rr >= config_params["map_size"]["rows"]:
+                        continue
+
+                    if not all([grid[rr][j + t + l] == 0 for l in range(q)]):
+                        continue
+                elif s == 2 or s == 3:
+                    t = random.randint(0, r - q)
+                    if s == 2:
+                        cc = j - 1
+                    elif s == 3:
+                        cc = j + c
+                    if cc < 0 or cc >= config_params["map_size"]["cols"]:
+                        continue
+
+                    if not all([grid[i + t + l][cc] == 0 for l in range(q)]):
+                        continue
+
+                break
+
+            if tries == 0:
+                continue
+
+            threats.append((i, j, level, r, c))
+            for k in range(r):
+                for l in range(c):
+                    grid[i + k][j + l] = level
+
+            if q != 0:
+                if s == 0 or s == 1:
+                    threats.append((rr, j + t, level, 1, q))
+                    for k in range(q):
+                        grid[rr][j + t + k] = level
+                elif s == 2 or s == 3:
+                    threats.append((i + t, cc, level, q, 1))
+                    for k in range(q):
+                        grid[i + t + k][cc] = level
+
+            remaining_threats -= 1
+
+            if remaining_threats == 1: # Last obstacle
+                config_params["threats_areas"] += num_of_threat_cells % int(config_params["threats_areas"])
+
+    # Print generated grid
     for i in range(len(grid)):
         print "".join(["%3s" % (str(t)) for t in grid[i]])
 
@@ -174,8 +261,9 @@ def main():
             start_row=t[0],
             start_col=t[1],
             level=t[2],
+            num_rows=t[3],
+            num_cols=t[4]
         )
-    objects["threats"] = {}
 
     hasher = hashlib.md5()
     with open(os.path.join(config_file_path, config_file_name), "rb") as config_input_file:
@@ -183,6 +271,7 @@ def main():
             hasher.update(chunk)
 
     objects["id"] = hasher.hexdigest()
+    objects["threat_levels"] = config_params["threat_levels"]
     objects["max_threat_prob"] = config_params["max_threat_prob"]
     objects["risk_factor"] = config_params["risk_factor"]
     objects["robots_num"] = config_params["robots_num"]
