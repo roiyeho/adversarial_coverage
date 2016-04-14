@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="box_obstacle">
+   <xacro:arg name="row" default="0"/>
+   <xacro:arg name="col" default="0"/>
+   <xacro:arg name="width" default="1"/>
+   <xacro:arg name="height" default="1"/>
+
+  <link name="obstacle" type="fixed">
+    <inertial>
+      <origin xyz="$(arg row) $(arg col) 0" />
+      <mass value="1.0" />
+      <inertia  ixx="0.0" ixy="0.0"  ixz="0.0"  iyy="0.0"  iyz="0.0"  izz="0.0" />
+    </inertial>
+    <visual>
+      <origin xyz="$(arg row) $(arg col) 0"/>
+      <geometry>
+        <box size="$(arg width) $(arg height) 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="$(arg row) $(arg col) 0"/>
+      <geometry>
+        <box size="$(arg width) $(arg height) 1" />
+      </geometry>
+    </collision>
+  </link>
+  <gazebo reference="obstacle">
+    <static>true</static>
+    <material>Gazebo/Black</material>
+  </gazebo>
+</robot>

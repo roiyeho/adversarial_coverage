@@ -40,13 +40,13 @@ input.yaml
 	    start_row: X
 
 This file should be used as input for 2 more scripts:
-*)  generate_world - Generate world file for gazebo
-*)  generate_map   - Generate map (pgm + yaml)
+*)  generate_launch - Generate launch file for gazebo
+*)  generate_map    - Generate map (pgm + yaml)
 
-generate_world.py:
+generate_launch.py:
 
 INPUT:
 input.yaml
 
 OUTPUT:
-world file
+launch file
