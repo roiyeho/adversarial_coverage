@@ -5,28 +5,15 @@ import random
 import hashlib
 import os
 
+config_params = None
+grid = None
+obstacles = None
+threats = None
 
-def main():
-    # Read config file
-
-    config_file_path = os.path.dirname(__file__)
-    config_file_name = "config.yaml"
-
-    try:
-        with open(os.path.join(config_file_path, config_file_name), "r") as config_input_file:
-            try:
-                config_params = yaml.load(config_input_file)
-            except yaml.YAMLError as exc:
-                print exc
-    except IOError:
-        print "Can't file config.yaml"
-
-    random.seed(config_params["random_seed"])
-
-    assert config_params["obstacle_ratio"] + config_params["threat_ratio"] < 1, "Too much obstacles and threats"
-
-    # Generate grid
-    grid = [[0 for _ in xrange(config_params["map_size"]["cols"])] for _ in xrange(config_params["map_size"]["rows"])]
+def generate_obstacles():
+    global config_params
+    global grid
+    global obstacles
 
     # Generate obastacles
     num_of_obstacle_cells = int(config_params["map_size"]["rows"] *
@@ -132,6 +119,11 @@ def main():
             if remaining_obstacles == 1: # Last obstacle
                 config_params["obstacles_areas"] += num_of_obstacle_cells % int(config_params["obstacles_areas"])
 
+def generate_threats():
+    global config_params
+    global grid
+    global threats
+
     # Generate threats
     num_of_threat_cells = int(config_params["map_size"]["rows"] * \
                               config_params["map_size"]["cols"] * \
@@ -235,6 +227,82 @@ def main():
 
             if remaining_threats == 1: # Last obstacle
                 config_params["threats_areas"] += num_of_threat_cells % int(config_params["threats_areas"])
+
+def isConnected():
+    def adjacnet_cells(i, j):
+        ret = []
+
+        if i > 0:
+            ret.append((i - 1, j))
+        if i < config_params["map_size"]["rows"] - 1:
+            ret.append((i + 1, j))
+
+        if j > 0:
+            ret.append((i, j - 1))
+        if j < config_params["map_size"]["cols"] - 1:
+            ret.append((i, j + 1))
+
+        return ret
+
+    global config_params
+    global grid
+
+    # Find empty cell
+    empty_cells = [(i, j) for i in range(config_params["map_size"]["rows"]) for j in range(config_params["map_size"]["cols"]) if grid[i][j] == 0]
+
+    i, j = empty_cells[0]
+    reachable_cells = []
+    reachable_cells_n = [(i, j)]
+
+    while set(reachable_cells) != set(reachable_cells_n):
+	reachable_cells = list(set(reachable_cells_n))
+        reachable_cells_n = []
+
+        for i, j in reachable_cells:
+            adj_cells = adjacnet_cells(i, j)
+
+            for adj_cell in adj_cells:
+                if grid[adj_cell[0]][adj_cell[1]] == 0:
+                    reachable_cells_n.append(adj_cell)
+
+        reachable_cells_n.extend(reachable_cells)
+
+    return set(empty_cells) == set(reachable_cells)
+
+def main():
+    # Read config file
+
+    config_file_path = os.path.dirname(__file__)
+    config_file_name = "config.yaml"
+
+    global config_params
+    global grid
+    global obstacles
+    global threats
+
+    try:
+        with open(os.path.join(config_file_path, config_file_name), "r") as config_input_file:
+            try:
+                config_params = yaml.load(config_input_file)
+            except yaml.YAMLError as exc:
+                print exc
+    except IOError:
+        print "Can't file config.yaml"
+
+    random.seed(config_params["random_seed"])
+
+    assert config_params["obstacle_ratio"] + config_params["threat_ratio"] < 1, "Too much obstacles and threats"
+
+    connected = False
+    while not connected:
+        # Generate grid
+        grid = [[0 for _ in xrange(config_params["map_size"]["cols"])] for _ in xrange(config_params["map_size"]["rows"])]
+
+        generate_obstacles()
+
+        connected = isConnected()
+
+    generate_threats()
 
     # Print generated grid
     for i in range(len(grid)):
