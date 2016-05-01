@@ -49,4 +49,4 @@ INPUT:
 input.yaml
 
 OUTPUT:
-launch file
+launch file include obstacles+threats spawning
