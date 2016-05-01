@@ -1,0 +1,31 @@
+<launch>
+
+  <param name="robot_width" value="0.5" />
+  <param name="robot_length" value="0.5" />
+  <param name="high_linear_speed" value="1.0" />
+  <param name="low_linear_speed" value="0.5" />
+  <param name="angular_speed" value="1.0" />
+  <param name="linear_tolerance" value="0.015" />
+  <param name="angular_tolerance" value="0.0015" />
+  <param name="risk_factor" value="1" />
+  <param name="threats_file" value="$(find adversarial_coverage)/worlds/autolab_threats.inc"/> 
+  <param name="log_file" value="$(find adversarial_coverage)/output/log.txt" />
+  <param name="write_log" value="true" />
+  <param name="stat_file" value="$(find adversarial_coverage)/output/stat" />
+
+  <arg name="map_file" default="$(find adversarial_coverage)/maps/autolab.yaml"/>
+
+  <!-- Run the map server -->
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />  
+  
+  <!-- Run gazebo with Lizi -->
+  <include file="$(find ric_gazebo)/launch/lizi_gazebo.launch" />
+
+  <!-- Run rviz 
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find adversarial_coverage)/rviz_config.rviz" />
+  -->
+
+  <!-- Run coverage node -->
+  <node name="adversarial_coverage" pkg="adversarial_coverage" type="adversarial_coverage_node" output="screen" cwd="node" />
+
+</launch>
