@@ -76,9 +76,17 @@ def main():
         l = gen_threat_spawn_node(i)
         launch.append(l)
 
-
     #print etree.tostring(tree, pretty_print=True)
-    tree.write(os.path.join(input_file_path, ("../launch/%s.launch" % (input_yaml["id"]))))
+    xml_file_name = os.path.join(input_file_path, ("../launch/%s.launch" % (input_yaml["id"])))
+    tree.write(xml_file_name)
+
+    # Indent the file (Using xmllint)
+    try:
+        os.system("xmllint --format %s > %s.formatted" % (xml_file_name, xml_file_name))
+        os.system("mv %s.formatted %s" % (xml_file_name, xml_file_name))
+        #call(["xmllint", "--format", "%s.raw" % (xml_file_name), ">", xml_file_name])
+    except:
+        print "Error generating launch file"
 
 if __name__ == "__main__":
     main()
