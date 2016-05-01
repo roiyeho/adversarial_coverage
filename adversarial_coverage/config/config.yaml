@@ -10,3 +10,4 @@ threats_areas: 10  	# if 0, then threats are randomly scattered
 max_threat_prob: 0.05	# the maximum probability of any threat stopping the robot
 risk_factor: 1.0  	# tradeoff between risk and time
 robots_num: 1
+pixel_size: 0.40	# Pixel size in meters
