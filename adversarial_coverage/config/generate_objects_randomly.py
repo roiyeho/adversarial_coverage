@@ -343,7 +343,7 @@ def main():
     objects["max_threat_prob"] = config_params["max_threat_prob"]
     objects["risk_factor"] = config_params["risk_factor"]
     objects["robots_num"] = config_params["robots_num"]
-    objects["pixel_size"] = config_params["pixel_size"]
+    objects["cell_size"] = config_params["cell_size"]
 
     with open(os.path.join(config_file_path, "input.yaml"), "w") as config_output_file:
         config_output_file.write(yaml.dump(objects, default_flow_style=False))
