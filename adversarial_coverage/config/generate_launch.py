@@ -26,6 +26,28 @@ def gen_obstacle_spawn_node(i):
 
     return ret
 
+def gen_threat_xacro_param(i, o):
+    ret = ET.Element("param")
+
+    ret.attrib["name"] = "threat_%s" % i
+    ret.attrib["command"] = "$(find xacro)/xacro.py $(find adversarial_coverage)/objects/threat.urdf.xacro row:=%s col:=%s width:=%s height:=%s level:=%s" % \
+                               (str(float(o["start_row"]) - 10 + 0.5 * float(o["num_rows"])), str(float(o["start_col"]) - 10 + 0.5 * float(o["num_cols"])), \
+                               o["num_rows"], o["num_cols"], o["level"])
+
+    return ret
+
+def gen_threat_spawn_node(i):
+    ret = ET.Element("node")
+
+    ret.attrib["name"]    = "spawn_threat_%s" % i
+    ret.attrib["pkg"]     = "gazebo_ros"
+    ret.attrib["type"]    = "spawn_model"
+    ret.attrib["args"]    = "-urdf -param threat_%s -model threat_%s" % (i, i)
+    ret.attrib["respawn"] = "false"
+    ret.attrib["output"]  = "screen"
+
+    return ret
+
 def main():
     input_file_path = os.path.dirname(__file__)
 
@@ -48,8 +70,23 @@ def main():
         l = gen_obstacle_spawn_node(i)
         launch.append(l)
 
+    for i, threat in input_yaml["threats"].iteritems():
+        p = gen_threat_xacro_param(i, threat)
+        launch.append(p)
+        l = gen_threat_spawn_node(i)
+        launch.append(l)
+
     #print etree.tostring(tree, pretty_print=True)
-    tree.write(os.path.join(input_file_path, ("../launch/%s.launch" % (input_yaml["id"]))))
+    xml_file_name = os.path.join(input_file_path, ("../launch/%s.launch" % (input_yaml["id"])))
+    tree.write(xml_file_name)
+
+    # Indent the file (Using xmllint)
+    try:
+        os.system("xmllint --format %s > %s.formatted" % (xml_file_name, xml_file_name))
+        os.system("mv %s.formatted %s" % (xml_file_name, xml_file_name))
+        #call(["xmllint", "--format", "%s.raw" % (xml_file_name), ">", xml_file_name])
+    except:
+        print "Error generating launch file"
 
 if __name__ == "__main__":
     main()

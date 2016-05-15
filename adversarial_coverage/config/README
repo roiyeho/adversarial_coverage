@@ -49,4 +49,13 @@ INPUT:
 input.yaml
 
 OUTPUT:
-launch file
+launch file include obstacles+threats spawning
+
+
+generate_map.py:
+
+INPUT:
+input.yaml
+
+OUTPUT:
+png file
