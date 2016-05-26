@@ -4,20 +4,26 @@ import yaml
 import png
 import os
 
-def fill_grid_with_object(o, grid, t,cmToPixel):
-    start_r = int(o["start_row"])*cmToPixel
-    start_c = int(o["start_col"])*cmToPixel
+pixels_per_cell = 0
+
+def fill_grid_with_object(o, grid, t):
+    global pixels_per_cell
+
+    start_r = int(o["start_row"]) * pixels_per_cell
+    start_c = int(o["start_col"]) * pixels_per_cell
 
     if t == "obstacle":
         v = 1
     elif t == "threat":
         v = 1 + o["level"]
 
-    for i in range(int(o["num_rows"])*cmToPixel):
-        for j in range(int(o["num_cols"])*cmToPixel):
+    for i in range(int(o["num_rows"]) * pixels_per_cell):
+        for j in range(int(o["num_cols"]) * pixels_per_cell):
             grid[start_r + i][start_c + j] = v
 
 def main():
+    PIXEL_SIZE = 0.05
+    global pixels_per_cell
 
     input_file_path = os.path.dirname(__file__)
 
@@ -31,67 +37,55 @@ def main():
     except IOError:
         print "Can't file input.yaml"
 
-    cmToPixel = int(input_yaml["cell_size"]/0.05)
+    cell_size       = float(input_yaml["cell_size"])
+    pixels_per_cell = int(cell_size / PIXEL_SIZE)
 
-    grid = [[0 for _ in range(int(input_yaml["map_size"]["cols"])*cmToPixel)] for _ in range(int(input_yaml["map_size"]["rows"])*cmToPixel)]
+    grid = [[0 for _ in range(int(input_yaml["map_size"]["cols"]) * pixels_per_cell)] 
+               for _ in range(int(input_yaml["map_size"]["rows"]) * pixels_per_cell)]
 
     for obstacle in input_yaml["obstacles"].itervalues():
-        fill_grid_with_object(obstacle, grid, "obstacle",cmToPixel)
+        fill_grid_with_object(obstacle, grid, "obstacle")
 
     max_threat_level = int(input_yaml["threat_levels"])
     for threat in input_yaml["threats"].itervalues():
-        fill_grid_with_object(threat, grid, "threat",cmToPixel)
+        fill_grid_with_object(threat, grid, "threat")
 
-    for i in range(int(input_yaml["map_size"]["rows"])*cmToPixel):
-        for j in range(int(input_yaml["map_size"]["cols"])*cmToPixel):
-            print grid[i][j], " ",
+    for i in range(int(input_yaml["map_size"]["rows"])):
+        for j in range(int(input_yaml["map_size"]["cols"])):
+            print grid[i * pixels_per_cell][j * pixels_per_cell], " ",
         print
 
     palette = [
                 (0xff, 0xff, 0xff),  # Empty cell
                 (0x0, 0x0, 0x0)  # Obstacle
               ]
+
     # Add palette values for different threat levels
     for i in range(max_threat_level):
-        palette.append((i * int(0xff/6), 0x0, 0x0))
+        palette.append(((i + 1) * int(0xff/(max_threat_level + 2)), 0x0, 0x0))
 
     map_png = png.Writer(len(grid[0]), len(grid), palette=palette, bitdepth=8)
 
     try:
-	grid = map(lambda x: map(int, x), grid)
-        f = open('%s.png'%(input_yaml["id"]), 'wb')
-	w = png.Writer(len(grid[0]), len(grid), palette=palette, bitdepth=8)	
-	w.write(f, grid)
-	f.close()
+        output_png = open(os.path.join(input_file_path, ("../maps/%s.png" % (input_yaml["id"]))), "wb")
+        map_png.write(output_png, grid)
     except:
         print "Can't write png file"
+    else:
+        output_png.close()
 
-    #create the image yaml file:
-    objects = {}
-
-    #image:Path to the image file containing the occupancy data; can be absolute, or relative to the location of the YAML file
-    objects["image"] = ('%s.yaml'%input_yaml["id"])
-
-    #resolution : Resolution of the map, meters / pixel
-    objects["resolution"] = cmToPixel
-
-    #origin:The 2-D pose of the lower-left pixel in the map, as (x, y, yaw), with yaw as counterclockwise rotation.
-    objects["origin"] = [0.0, 0.0, 0.0]
-
-    #occupied_thresh : Pixels with occupancy probability greater than this threshold are considered completely occupied.
-    objects["occupied_thresh"] =  0.65
-
-    #free_thresh : Pixels with occupancy probability less than this threshold are considered completely free.
-    objects["free_thresh"] =  0.65
-
-    #negate : Whether the white/black free/occupied semantics should be reversed (interpretation of thresholds is unaffected) 
-    objects["negate"] = 0
-
-    with open('%s.yaml'%(input_yaml["id"]), "w") as map_yaml:
-        map_yaml.write(yaml.dump(objects))
-
-
-	
+    try:
+        output_yaml = open(os.path.join(input_file_path, ("../maps/%s.yaml" % (input_yaml["id"]))), "w")
+        output_yaml.write('image: %s.yaml\n' % (input_yaml["id"]))
+	output_yaml.write('resolution: %0.3f\n' % (PIXEL_SIZE))
+	output_yaml.write('origin: [0.0, 0.0, 0.0]\n')
+	output_yaml.write('occupied_thresh: 0.65\n')
+	output_yaml.write('free_thresh: 0.196\n')
+	output_yaml.write('negate: 0\n')
+    except:
+        print "Can't write yaml file"
+    else:
+        output_yaml.close()
 
 if __name__ == "__main__":
     main()
