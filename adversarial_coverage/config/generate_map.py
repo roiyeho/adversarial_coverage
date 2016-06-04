@@ -76,7 +76,7 @@ def main():
 
     try:
         output_yaml = open(os.path.join(input_file_path, ("../maps/%s.yaml" % (input_yaml["id"]))), "w")
-        output_yaml.write('image: %s.yaml\n' % (input_yaml["id"]))
+        output_yaml.write('image: %s.png\n' % (input_yaml["id"]))
 	output_yaml.write('resolution: %0.3f\n' % (PIXEL_SIZE))
 	output_yaml.write('origin: [0.0, 0.0, 0.0]\n')
 	output_yaml.write('occupied_thresh: 0.65\n')
