@@ -347,6 +347,7 @@ def main():
 
     with open(os.path.join(config_file_path, "input.yaml"), "w") as config_output_file:
         config_output_file.write(yaml.dump(objects, default_flow_style=False))
+    print "input.yaml was generated successfully!"
 
 
 if __name__ == "__main__":

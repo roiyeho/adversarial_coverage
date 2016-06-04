@@ -48,6 +48,34 @@ def gen_threat_spawn_node(i):
 
     return ret
 
+def gen_walls(r, c):
+    v = [(str(0 - 10 + 0.5 * r), str(0 - 10), str(0 - 10 + 1.5 * r), str(0 - 10)), \
+         (str(0 - 10), str(0 - 10 + 0.5 * c), str(0 - 10), str(0 - 10 + 1.5 * c)), \
+         (str(0 - 10 + 0.5 * r), str(0 - 10 + c), str(0 - 10 + 1.5 * r), str(0 - 10 + c)), \
+         (str(0 - 10 + r), str(0 - 10 + 0.5 * c), str(0 - 10 + r), str(0 - 10 + 1.5 * c))
+        ]
+
+    ret = []
+
+    for i in range(len(v)):
+        t = ET.Element("param")
+
+        t.attrib["name"] = "wall_%s" % str(i)
+        t.attrib["command"] = "$(find xacro)/xacro.py $(find adversarial_coverage)/objects/wall.urdf.xacro start_x:=%s start_y:=%s end_x:=%s end_y:=%s" % v[i]
+        ret.append(t)
+
+        t = ET.Element("node")
+
+        t.attrib["name"]    = "spawn_wall_%s" % str(i)
+        t.attrib["pkg"]     = "gazebo_ros"
+        t.attrib["type"]    = "spawn_model"
+        t.attrib["args"]    = "-urdf -param wall_%s -model wall_%s" % (str(i), str(i))
+        t.attrib["respawn"] = "false"
+        t.attrib["output"]  = "screen"
+        ret.append(t)
+
+    return ret
+
 def main():
     input_file_path = os.path.dirname(__file__)
 
@@ -76,14 +104,18 @@ def main():
         l = gen_threat_spawn_node(i)
         launch.append(l)
 
+    for w in gen_walls(float(input_yaml["map_size"]["rows"]), float(input_yaml["map_size"]["cols"])):
+        launch.append(w)
+
     #print etree.tostring(tree, pretty_print=True)
-    xml_file_name = os.path.join(input_file_path, ("../launch/%s.launch" % (input_yaml["id"])))
+    xml_file_name = os.path.abspath(os.path.join(input_file_path, ("../launch/%s.launch" % (input_yaml["id"]))))
     tree.write(xml_file_name)
 
     # Indent the file (Using xmllint)
     try:
         os.system("xmllint --format %s > %s.formatted" % (xml_file_name, xml_file_name))
         os.system("mv %s.formatted %s" % (xml_file_name, xml_file_name))
+        print "%s was generated successfully!" % xml_file_name	
         #call(["xmllint", "--format", "%s.raw" % (xml_file_name), ">", xml_file_name])
     except:
         print "Error generating launch file"
