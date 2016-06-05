@@ -9,6 +9,7 @@
 #define ROBOT_H_
 
 #include <ros/ros.h>
+#include <string.h>
 #include <tf/transform_listener.h>
 #include "GeneralDefinitions.h"
 #include "Map.h"
@@ -16,6 +17,8 @@
 class Robot {
 private:
 	ros::NodeHandle nh;
+
+	string robotName;
 
 	double cellSize;
 	double highLinearSpeed;

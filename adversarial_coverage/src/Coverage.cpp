@@ -26,6 +26,11 @@ Coverage::Coverage() : map(), robot(map), coverageTime(0) {
 	GreedyAdversarialCoverage gac(nh, map, initialRobotCell, initialRobotDirection);
 	gac.buildCoveragePath(coveragePath);
 	Logger::getInstance().write("Coverage path:");
+
+	//TODO: Debug, Delete!
+	if(coveragePath.size() == 0)
+		Logger::getInstance().write("Well, youre screwd.\n");
+	Logger::getInstance().write("Size is not Zero.\n");
 	Logger::getInstance().printPath(coveragePath);
 
 	printStatistics();

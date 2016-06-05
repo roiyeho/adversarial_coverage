@@ -21,13 +21,14 @@ Robot::Robot(const Map &map): map(map), totalTurningTime(0), numOfTurns(0),
 	nh.getParam("robot_length", robotLength);
 	cellSize = max(robotWidth, robotLength);
 
+	nh.getParam("robot_name", robotName);
 	nh.getParam("high_linear_speed", highLinearSpeed);
 	nh.getParam("low_linear_speed", lowLinearSpeed);
 	nh.getParam("angular_speed", angularSpeed);
 	nh.getParam("linear_tolerance", linearTolerance);
 	nh.getParam("angular_tolerance", angularTolerance);
 
-	cmdVelPublisher = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+	cmdVelPublisher = nh.advertise<geometry_msgs::Twist>(robotName+"/"CMD_VEL, 10);
 
 	const Grid &grid = map.getGrid();
 	rows = grid.size();
@@ -41,7 +42,7 @@ Robot::Robot(const Map &map): map(map), totalTurningTime(0), numOfTurns(0),
 	directionNames[4] = "INIT";
 
 	// Need to wait between creating a new TF listener and calling lookupTransform()
-	sleep(1.0);
+	sleep(10.0);
 
 	getCurrentPose();
 	printCurrentPose();
@@ -64,7 +65,8 @@ void Robot::startCoverage(const Path &coveragePath) {
 void Robot::getCurrentPose() {
     tf::StampedTransform transform;
     try {
-        listener.lookupTransform("/map", "/base_footprint", ros::Time(0), transform);
+    	listener.waitForTransform("/map", "/" + robotName + "/base_link", ros::Time(0), ros::Duration(60.0));
+        listener.lookupTransform("/map", "/" + robotName + "/base_link", ros::Time(0), transform);
         currentPosition.first = transform.getOrigin().x();
         currentPosition.second = transform.getOrigin().y();
         currentAngle = tf::getYaw(transform.getRotation());
@@ -277,6 +279,8 @@ void Robot::moveForwardToNextCell(Cell targetCell) {
 	moveCommand.linear.x = highLinearSpeed;
 
 	while (ros::ok() && (currentCell.first != targetCell.first || currentCell.second != targetCell.second)) {
+		ROS_INFO("Sending move forward command.\n");
+
 		cmdVelPublisher.publish(moveCommand);
 		rate.sleep();
 		getCurrentPose();

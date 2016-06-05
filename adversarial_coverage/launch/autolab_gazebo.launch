@@ -12,14 +12,18 @@
   <param name="log_file" value="$(find adversarial_coverage)/output/log.txt" />
   <param name="write_log" value="true" />
   <param name="stat_file" value="$(find adversarial_coverage)/output/stat" />
+  <param name="robot_name" value="lizi_1" />
 
   <arg name="map_file" default="$(find adversarial_coverage)/maps/autolab.yaml"/>
 
-  <!-- Run the map server -->
-  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />  
+  <!-- Run the map server --> 
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
   
   <!-- Run gazebo with Lizi -->
-  <include file="$(find ric_gazebo)/launch/lizi_gazebo.launch" />
+  <include file="$(find adversarial_coverage)/launch/lizi_gazebo.launch" />
+
+  <!-- Load gazebo world -->
+  <include file="$(find adversarial_coverage)/launch/test_map.launch" />
 
   <!-- Run rviz 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find adversarial_coverage)/rviz_config.rviz" />
