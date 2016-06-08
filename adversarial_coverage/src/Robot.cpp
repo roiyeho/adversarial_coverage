@@ -28,7 +28,7 @@ Robot::Robot(const Map &map): map(map), totalTurningTime(0), numOfTurns(0),
 	nh.getParam("linear_tolerance", linearTolerance);
 	nh.getParam("angular_tolerance", angularTolerance);
 
-	cmdVelPublisher = nh.advertise<geometry_msgs::Twist>(robotName+"/"CMD_VEL, 10);
+	cmdVelPublisher = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
 
 	const Grid &grid = map.getGrid();
 	rows = grid.size();
