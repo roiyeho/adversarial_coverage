@@ -1,35 +1,35 @@
 <launch>
+
   <param name="robot_width" value="0.5" />
   <param name="robot_length" value="0.5" />
   <param name="high_linear_speed" value="1.0" />
   <param name="low_linear_speed" value="0.5" />
   <param name="angular_speed" value="1.0" />
-  <param name="linear_tolerance" value="0.015" />
-  <param name="angular_tolerance" value="0.0015" />
+  <param name="linear_tolerance" value="0.025" />
+  <param name="angular_tolerance" value="0.0025" />
   <param name="risk_factor" value="1" />
   <param name="threats_file" value="$(find adversarial_coverage)/worlds/autolab_threats.inc"/> 
   <param name="log_file" value="$(find adversarial_coverage)/output/log.txt" />
   <param name="write_log" value="true" />
   <param name="stat_file" value="$(find adversarial_coverage)/output/stat" />
-  <param name="robot_name" value="lizi1" />
-  
-  <param name="/use_sim_time" value="true"/>
-  <arg name="map_file" default="$(find adversarial_coverage)/maps/autolab.yaml"/>
+  <param name="robot_name" value="lizi_1" />
 
-  <!-- Run the map server -->
+  <arg name="map_file" default="$(find adversarial_coverage)/maps/map.yaml"/>
+
+  <!-- Run the map server --> 
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+  
+  <!-- Run gazebo with Lizi -->
+  <include file="$(find adversarial_coverage)/launch/lizi_gazebo.launch" />
 
-  <!-- Run stage -->
-  <node pkg="stage_ros" type="stageros" name="stageros" args="$(find adversarial_coverage)/worlds/autolab.world" respawn="false">
-    <param name="base_watchdog_timeout" value="0.05"/>
-  </node>
+  <!-- Load gazebo world -->
+  <include file="$(find adversarial_coverage)/launch/test_map.launch" />
 
-  <!-- Run rviz -->
+  <!-- Run rviz 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find adversarial_coverage)/rviz_config.rviz" />
-
-  <!-- Publish a static transformation between /map and /odom -->
-  <node name="tf" pkg="tf" type="static_transform_publisher" args="-12 10 0 1.570 0 0 /map /odom 100" />
+  -->
 
   <!-- Run coverage node -->
   <node name="adversarial_coverage" pkg="adversarial_coverage" type="adversarial_coverage_node" output="screen" cwd="node" />
+
 </launch>

@@ -26,6 +26,7 @@ Coverage::Coverage() : map(), robot(map), coverageTime(0) {
 	GreedyAdversarialCoverage gac(nh, map, initialRobotCell, initialRobotDirection);
 	gac.buildCoveragePath(coveragePath);
 	Logger::getInstance().write("Coverage path:");
+
 	Logger::getInstance().printPath(coveragePath);
 
 	printStatistics();

@@ -26,4 +26,7 @@ typedef vector<Cell> Path;
 #define float_correction 0.00001
 #define DIRECTIONS_NUM 4
 
+//Lizi topics mapping
+#define CMD_VEL "/diff_driver/command"
+
 #endif /* GENERAL_H_ */
