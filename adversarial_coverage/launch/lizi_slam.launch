@@ -1,0 +1,25 @@
+<launch>
+
+  <node name="map_server" pkg="map_server" type="map_saver" />
+  
+  <!-- Run gazebo with Lizi -->
+  <include file="$(find adversarial_coverage)/launch/lizi_gazebo.launch" />
+
+  <!-- Load world -->
+  <include file="$(find adversarial_coverage)/launch/test_map.launch" />
+
+  <!-- Publish TF from base_link to odom
+  <node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /lizi_1/base_link /lizi_1/odom_link 100" />
+  -->
+  <!-- Run rviz 
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find adversarial_coverage)/rviz_config.rviz" />
+  -->
+
+  <!-- Run Gmapping SLAM -->
+  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
+    <remap from="scan" to="lizi_1/scan"/>
+    <param name="odom_frame" value="lizi_1/odom"/>
+    <param name="base_frame" value="lizi_1/base_link"/>
+  </node>
+
+</launch>
