@@ -220,6 +220,8 @@ void Robot::rotateRobotToNewDirection(Direction newDirection) {
 		rate.sleep();
 		getCurrentPose();
 		printCurrentPose();
+
+		ROS_INFO("Angle refinement #1");
 	}
 
 	// Slow the speed near the target
@@ -233,10 +235,12 @@ void Robot::rotateRobotToNewDirection(Direction newDirection) {
 		rate.sleep();
 		getCurrentPose();
 		printCurrentPose();
+
+		ROS_INFO("Angle refinement #2");
 	}
 
 	// Further refine the angle
-	rotateCommand.angular.z = turnLeft ? 0.005 * angularSpeed : -0.005 * angularSpeed;
+	rotateCommand.angular.z = turnLeft ? 0.05 * angularSpeed : -0.05 * angularSpeed;
 	while (ros::ok() && abs(currentAngle - targetAngle) > angularTolerance) {
 		// The robot can reach the LEFT direction from negative PI or positive PI
 		if (newDirection == LEFT && (abs(currentAngle - (-M_PI)) <= angularTolerance))
@@ -246,6 +250,8 @@ void Robot::rotateRobotToNewDirection(Direction newDirection) {
 		rate.sleep();
 		getCurrentPose();
 		printCurrentPose();
+
+		ROS_INFO("Angle refinement #3");
 	}
 
 	// The robot initially rotates in steps of 0.05 radians (however sometimes only a step of 0.1 can be detected), until it is within 0.12 from the target angle
