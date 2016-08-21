@@ -16,10 +16,14 @@ Robot::Robot(const Map &map): map(map), totalTurningTime(0), numOfTurns(0),
 	total90DegreesTurningTime(0), numOf90DegreesTurns(0), total180DegreesTurningTime(0), numOf180DegreesTurns(0),
 	totalMovingForwardToCellTime(0), numOfStepsForwardToCell(0), totalMovingForwardToPositionTime(0),
 	numOfStepsForwardToPosition(0) {
+ROS_INFO("0");
 	double robotWidth, robotLength;
 	nh.getParam("robot_width", robotWidth);
 	nh.getParam("robot_length", robotLength);
 	cellSize = max(robotWidth, robotLength);
+
+
+ROS_INFO("1");
 
 	nh.getParam("robot_name", robotName);
 	nh.getParam("high_linear_speed", highLinearSpeed);
@@ -29,7 +33,9 @@ Robot::Robot(const Map &map): map(map), totalTurningTime(0), numOfTurns(0),
 	nh.getParam("angular_tolerance", angularTolerance);
 
 	cmdVelPublisher = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+        poseSubscriber = nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>("amcl_pose", 10, &Robot::poseChangeCallback, this); //*
 
+ROS_INFO("2");
 	const Grid &grid = map.getGrid();
 	rows = grid.size();
 	cols = grid[0].size();
@@ -41,6 +47,7 @@ Robot::Robot(const Map &map): map(map), totalTurningTime(0), numOfTurns(0),
 	directionNames[3] = "DOWN";
 	directionNames[4] = "INIT";
 
+ROS_INFO("3");
 	// Need to wait between creating a new TF listener and calling lookupTransform()
 	sleep(10.0);
 
@@ -62,8 +69,22 @@ void Robot::startCoverage(const Path &coveragePath) {
 	Logger::getInstance().write("Finished");
 }
 
+void Robot::poseChangeCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg) {
+    currentPosition.first = msg->pose.pose.position.x;
+    currentPosition.second = msg->pose.pose.position.y;
+    currentAngle = tf::getYaw(msg->pose.pose.orientation);
+
+    // TODO add safety check (timestamp to last update)
+
+    convertCurrentPositionToCell();
+
+    ROS_INFO("%f, %f", currentPosition.first, currentPosition.second);
+}
+
 void Robot::getCurrentPose() {
-    tf::StampedTransform transform;
+    ros::spinOnce();
+
+    /* tf::StampedTransform transform;
     try {
     	listener.waitForTransform("/map", "/" + robotName + "/base_link", ros::Time(0), ros::Duration(60.0));
         listener.lookupTransform("/map", "/" + robotName + "/base_link", ros::Time(0), transform);
@@ -75,7 +96,7 @@ void Robot::getCurrentPose() {
     }
     catch (tf::TransformException & ex) {
         ROS_ERROR("%s", ex.what());
-    }
+    }*/ 
 }
 
 Direction Robot::findCurrentDirection() const {

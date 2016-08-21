@@ -10,6 +10,7 @@
 
 #include <ros/ros.h>
 #include <string.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <tf/transform_listener.h>
 #include "GeneralDefinitions.h"
 #include "Map.h"
@@ -32,6 +33,8 @@ private:
 	int rows, cols;
 
 	ros::Publisher cmdVelPublisher;
+        ros::Subscriber poseSubscriber; //*
+        void poseChangeCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg); //*
 	tf::TransformListener listener;
 
 	//Position initialPosition;
