@@ -60,4 +60,23 @@
     <param name="base_frame_id" value="lizi_1_base_link"/>
     <param name="max_particles" value="1000"/>
    </node>
+
+  <param name="robot_width" value="0.25" />
+  <param name="robot_length" value="0.25" />
+  <param name="high_linear_speed" value="1.0" />
+  <param name="low_linear_speed" value="0.5" />
+  <param name="angular_speed" value="1.0" />
+  <param name="linear_tolerance" value="0.015" />
+  <param name="angular_tolerance" value="0.0015" />
+  <param name="risk_factor" value="1" />
+  <param name="threats_file" value="$(find adversarial_coverage)/maps/lizi_empty_threats.inc"/>
+  <param name="log_file" value="$(find adversarial_coverage)/output/lizi_localization_amcl_log.txt" />
+  <param name="write_log" value="true" />
+  <param name="stat_file" value="$(find adversarial_coverage)/output/lizi_localization_amcl_stat" />
+  <param name="robot_name" value="lizi1" />
+
+  <!-- Run coverage node -->
+  <node name="adversarial_coverage" pkg="adversarial_coverage" type="adversarial_coverage_node" output="screen" cwd="node">
+    <remap from="cmd_vel" to="/lizi_1/cmd_vel" />
+  </node>
 </launch>
