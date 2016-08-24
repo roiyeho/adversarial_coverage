@@ -15,9 +15,11 @@
 
 class Map {
 private:
-	// Data members
+	// Data membersCell: (4, 7)
+
 	ros::NodeHandle nh;
 
+	bool simulationMode;
 	float mapResolution;
 	float mapHeight;
 	float mapWidth;

@@ -19,6 +19,7 @@
 
 Map::Map() : freeCellsNum(0), dangerousCellsNum(0) {
 	nh.getParam("threats_file", threatsFilePath);
+	nh.getParam("simulation_mode", simulationMode);
 
 	// Read the map
 	if (!getMap())
@@ -246,16 +247,32 @@ void Map::addThreatToMap(float x, float y, float width, float length, float thre
 // Converts the robot's current position to a grid cell
 Cell Map::convertPositionToCell(Position pos) const {
 	Cell cell;
-	cell.first = (mapHeight / 2.0 - pos.second) / cellSize;
-	cell.second = (mapWidth / 2.0 + pos.first) / cellSize;
+
+	// In the simulator, the origin (0,0) is in the center of the map, while in the robot the origin (0,0) is in the lower-left corner
+	if (simulationMode) {
+		cell.first = (mapHeight / 2.0 - pos.second) / cellSize;
+		cell.second = (mapWidth / 2.0 + pos.first) / cellSize;
+	}
+	else {
+		cell.first = (mapHeight - pos.second) / cellSize;
+		cell.second = pos.first / cellSize;
+	}
 	return cell;
 }
 
 // Return the center point of the cell
 Position Map::convertCellToPosition(Cell cell) const {
+
 	Position pos;
-	pos.first = cell.second * cellSize - mapWidth / 2.0 + cellSize / 2.0;
-	pos.second = mapHeight / 2.0 - cell.first * cellSize - cellSize / 2.0;
+	// In the simulator, the origin (0,0) is in the center of the map, while in the robot the origin (0,0) is in the lower-left corner
+	if (simulationMode) {
+		pos.first = cell.second * cellSize - mapWidth / 2.0 + cellSize / 2.0;
+		pos.second = mapHeight / 2.0 - cell.first * cellSize - cellSize / 2.0;
+        } 
+	else {
+		pos.first = cell.second * cellSize + cellSize / 2.0;
+		pos.second = mapHeight - cell.first * cellSize - cellSize / 2.0;
+ 	}
 	return pos;
 }
 
