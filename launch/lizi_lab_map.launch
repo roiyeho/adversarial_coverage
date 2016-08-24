@@ -74,6 +74,7 @@
   <param name="write_log" value="true" />
   <param name="stat_file" value="$(find adversarial_coverage)/output/lizi_localization_amcl_stat" />
   <param name="robot_name" value="lizi1" />
+  <param name="simulation_mode" value="false" />
 
   <!-- Run coverage node -->
   <node name="adversarial_coverage" pkg="adversarial_coverage" type="adversarial_coverage_node" output="screen" cwd="node">
