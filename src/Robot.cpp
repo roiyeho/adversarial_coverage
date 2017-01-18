@@ -5,6 +5,9 @@
  *      Author: roiyeho
  */
 
+//TODO: 1. Find out why no angle fix from starting position. 
+//TODO: 2. Find out why no angle fix in high linear speed. Decreasing tolerance to half and doubling rotation speed didn't work.
+
 #include "Robot.h"
 #include <geometry_msgs/Twist.h>
 #include <cmath>
@@ -16,14 +19,11 @@ Robot::Robot(const Map &map): map(map), totalTurningTime(0), numOfTurns(0),
 	total90DegreesTurningTime(0), numOf90DegreesTurns(0), total180DegreesTurningTime(0), numOf180DegreesTurns(0),
 	totalMovingForwardToCellTime(0), numOfStepsForwardToCell(0), totalMovingForwardToPositionTime(0),
 	numOfStepsForwardToPosition(0) {
-ROS_INFO("0");
+	
 	double robotWidth, robotLength;
 	nh.getParam("robot_width", robotWidth);
 	nh.getParam("robot_length", robotLength);
 	cellSize = max(robotWidth, robotLength);
-
-
-ROS_INFO("1");
 
 	nh.getParam("robot_name", robotName);
 	nh.getParam("high_linear_speed", highLinearSpeed);
@@ -31,23 +31,25 @@ ROS_INFO("1");
 	nh.getParam("angular_speed", angularSpeed);
 	nh.getParam("linear_tolerance", linearTolerance);
 	nh.getParam("angular_tolerance", angularTolerance);
+	nh.getParam("rotation_fix_tolerance", rotationFixTolerance);
+	nh.getParam("rotation_fix_speed", rotationFixSpeed);
 
 	cmdVelPublisher = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
-        poseSubscriber = nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>("amcl_pose", 10, &Robot::poseChangeCallback, this); //*
+   poseSubscriber = nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>("amcl_pose", 10, &Robot::poseChangeCallback, this); //*
 
-ROS_INFO("2");
 	const Grid &grid = map.getGrid();
 	rows = grid.size();
 	cols = grid[0].size();
 	minDistanceFromObstacles = map.getMinimumDistanceFromObstacles();
 
 	directionNames[0] = "RIGHT";
+
+
 	directionNames[1] = "UP";
 	directionNames[2] = "LEFT";
 	directionNames[3] = "DOWN";
 	directionNames[4] = "INIT";
 
-ROS_INFO("3");
 	// Need to wait between creating a new TF listener and calling lookupTransform()
 	sleep(10.0);
 
@@ -65,6 +67,8 @@ void Robot::startCoverage(const Path &coveragePath) {
 		Cell nextCell = *(it + 1);
 		moveToCell(cell, nextCell, coveragePath);
 	}
+
+
 
 	Logger::getInstance().write("Finished");
 }
@@ -97,6 +101,8 @@ void Robot::getCurrentPose() {
     catch (tf::TransformException & ex) {
         ROS_ERROR("%s", ex.what());
     }*/ 
+
+
 }
 
 Direction Robot::findCurrentDirection() const {
@@ -124,12 +130,15 @@ void Robot::convertCurrentPositionToCell() {
 	return pos;
 }*/
 
+
+
 // Shows the current position of the robot
 void Robot::printCurrentPose() {
     std::stringstream logMessage;
 	logMessage << "Current pose: (" << currentPosition.first << ", " << currentPosition.second << ", " << currentAngle << "), Cell: (" <<
 		currentCell.first << ", " << currentCell.second << ")";
 	Logger::getInstance().write(logMessage.str());
+
 }
 
 Cell Robot::getCurrentCell() const {
@@ -153,6 +162,8 @@ void Robot::adjustTargetPositionNearWalls(Cell targetCell, Position &targetPosit
 	else if (direction == DOWN && targetCell.first == rows - 1)
 		targetPosition.second += minDistanceFromObstacles;
 	else if (direction == LEFT && targetCell.second == 0)
+
+
 		targetPosition.first += minDistanceFromObstacles;
 	else if (direction == RIGHT && targetCell.second == cols - 1)
 		targetPosition.first -= minDistanceFromObstacles;
@@ -178,6 +189,8 @@ void Robot::moveToCell(Cell targetCell, Cell nextCellAfterTarget, const Path &co
 	// it needs to slow down at the end, so its position can more precisely match the target position
 	if (targetCell == *(coveragePath.end() - 1)) {
 		moveForwardToPreciseLocation(targetPosition);
+
+
 	}
 	else {
 		Direction nextDirection = PathUtils::findDirection(targetCell, nextCellAfterTarget);
@@ -195,7 +208,8 @@ void Robot::moveToCell(Cell targetCell, Cell nextCellAfterTarget, const Path &co
 
 	// Stop the robot (in case the last command is still active)
 	geometry_msgs::Twist stopCommand;
-	cmdVelPublisher.publish(stopCommand);
+	stopCommand.angular.z = 0;
+	cmdVelPublisher.publish(stopCommand);		
 
 	getCurrentPose();
 	printCurrentPose();
@@ -207,10 +221,10 @@ void Robot::rotateRobotToNewDirection(Direction newDirection) {
 	Logger::getInstance().write(logMessage.str());
 
 	double directionAngles[] = { 0, M_PI / 2, M_PI, -M_PI/2 };
-	double targetAngle = directionAngles[newDirection];
+	targetAngle = directionAngles[newDirection];
 
 	// Decide to which side to rotate - left or right by choosing the small angle
-	bool turnLeft;
+	// bool turnLeft;
 	if (targetAngle - currentAngle > 0 && targetAngle - currentAngle < M_PI)
 		turnLeft = true;
 	else if (targetAngle - currentAngle < -M_PI)
@@ -219,7 +233,8 @@ void Robot::rotateRobotToNewDirection(Direction newDirection) {
 		turnLeft = false;
 
 	std::stringstream logMessage2;
-	logMessage2 << "Target angle: " << targetAngle << ", " << (turnLeft ? "rotating left" : "rotating right");
+	logMessage2 << "Current angle: " << currentAngle << ", Target angle: " << targetAngle << ", " 
+					<< (turnLeft ? "rotating left" : "rotating right");
 	Logger::getInstance().write(logMessage2.str());
 
 	long long startTime = GeneralUtils::getMSOfDay();
@@ -228,13 +243,13 @@ void Robot::rotateRobotToNewDirection(Direction newDirection) {
 	rotateCommand.angular.z = turnLeft ? angularSpeed : -angularSpeed;
 
 	// How fast will we update the robot's movement
-	ros::Rate rate(20);
+	ros::Rate rate(50);
 
 	// Rotate until the robot reaches the target angle
-	while (ros::ok() && abs(currentAngle - targetAngle) > angularTolerance * 200) {
+	while (ros::ok() && abs(currentAngle - targetAngle) > angularTolerance * 50) {
 
 		// The robot can reach the LEFT direction from negative PI or positive PI
-		if (newDirection == LEFT && (abs(currentAngle - (-M_PI)) <= angularTolerance * 200))
+		if (newDirection == LEFT && (abs(currentAngle - (-M_PI)) <= angularTolerance * 50))
 		    break;
 
 		cmdVelPublisher.publish(rotateCommand);
@@ -246,11 +261,16 @@ void Robot::rotateRobotToNewDirection(Direction newDirection) {
 	}
 
 	// Slow the speed near the target
-	rotateCommand.angular.z = turnLeft ? 0.1 * angularSpeed : -0.1 * angularSpeed;
-	while (ros::ok() && abs(currentAngle - targetAngle) > angularTolerance * 15) {
+	//rotateCommand.angular.z = turnLeft ? 0.1 * angularSpeed : -0.1 * angularSpeed;
+	rotateCommand.angular.z = turnLeft ? 0.5 * angularSpeed : -0.5 * angularSpeed;
+
+	while (ros::ok() && abs(currentAngle - targetAngle) > angularTolerance * 10) {
 		// The robot can reach the LEFT direction from negative PI or positive PI
-		if (newDirection == LEFT && (abs(currentAngle - (-M_PI)) <= angularTolerance * 15))
+		if (newDirection == LEFT && (abs(currentAngle - (-M_PI)) <= angularTolerance * 10))
 			break;
+			
+		if(setOptimalRotationDirection())
+			rotateCommand.angular.z = turnLeft ? 0.05 * angularSpeed : -0.05 * angularSpeed;
 
 		cmdVelPublisher.publish(rotateCommand);
 		rate.sleep();
@@ -261,11 +281,14 @@ void Robot::rotateRobotToNewDirection(Direction newDirection) {
 	}
 
 	// Further refine the angle
-	rotateCommand.angular.z = turnLeft ? 0.05 * angularSpeed : -0.05 * angularSpeed;
+	//rotateCommand.angular.z = turnLeft ? 0.05 * angularSpeed : -0.05 * angularSpeed;
 	while (ros::ok() && abs(currentAngle - targetAngle) > angularTolerance) {
 		// The robot can reach the LEFT direction from negative PI or positive PI
 		if (newDirection == LEFT && (abs(currentAngle - (-M_PI)) <= angularTolerance))
 			break;
+		
+		if(setOptimalRotationDirection())
+			rotateCommand.angular.z = turnLeft ? 0.05 * angularSpeed : -0.05 * angularSpeed;
 
 		cmdVelPublisher.publish(rotateCommand);
 		rate.sleep();
@@ -292,6 +315,20 @@ void Robot::rotateRobotToNewDirection(Direction newDirection) {
 			numOf90DegreesTurns++;
 		}
 	}
+	
+	stringstream logMessage3;
+	logMessage3 << "Finished rotating";
+	Logger::getInstance().write(logMessage3.str());
+
+	stringstream logMessage4;
+	logMessage4 << "Sending stop command...";
+	Logger::getInstance().write(logMessage4.str());
+
+	for (int i = 0; i < 20; i++) {
+		geometry_msgs::Twist stopCommand;
+		stopCommand.angular.z = 0;
+		cmdVelPublisher.publish(stopCommand);
+	}
 }
 
 void Robot::moveForwardToNextCell(Cell targetCell) {
@@ -307,9 +344,30 @@ void Robot::moveForwardToNextCell(Cell targetCell) {
 
 	while (ros::ok() && (currentCell.first != targetCell.first || currentCell.second != targetCell.second)) {
 		ROS_INFO("Sending move forward command.\n");
+		
+		if ((currentDirection == LEFT && abs(currentAngle - M_PI) > 0.5*rotationFixTolerance && abs(currentAngle - (-M_PI)) > 0.5*rotationFixTolerance)
+			|| (currentDirection != LEFT && abs(currentAngle - targetAngle) > 0.5*rotationFixTolerance)) {		
+		//if ((abs(currentAngle - targetAngle) > rotationFixTolerance) &&
+		//    ((currentDirection != LEFT) && abs(currentAngle - (-M_PI)) > rotationFixTolerance)) {
+			stringstream fixRotationMsg;
+			fixRotationMsg << "Fixing angle #1";
+			Logger::getInstance().write(fixRotationMsg.str());
+			
+			setOptimalRotationDirection();
+
+			if (turnLeft)
+				moveCommand.angular.z = rotationFixSpeed*2;
+			else
+				moveCommand.angular.z = -rotationFixSpeed*2;
+		}		
+		else {
+			moveCommand.angular.z = 0;
+		}	
 
 		cmdVelPublisher.publish(moveCommand);
 		rate.sleep();
+
+
 		getCurrentPose();
 		printCurrentPose();
 	}
@@ -342,8 +400,25 @@ void Robot::moveForwardToPreciseLocation(Position targetPosition) {
 
 	geometry_msgs::Twist moveCommand;
 	moveCommand.linear.x = lowLinearSpeed;
+	moveCommand.angular.z = 0;
 
-	while (ros::ok() && abs(currentValue - targetValue) > 10 * linearTolerance) {
+	while (ros::ok() && abs(currentValue - targetValue) > 10 * linearTolerance) {	
+		if (abs(currentAngle - targetAngle) > rotationFixTolerance) {
+			stringstream fixRotationMsg;
+			fixRotationMsg << "Fixing angle #2";
+			Logger::getInstance().write(fixRotationMsg.str());
+			
+			setOptimalRotationDirection();
+			
+			if (turnLeft)
+				moveCommand.angular.z = rotationFixSpeed;
+			else
+				moveCommand.angular.z = -rotationFixSpeed;
+		}		
+		else {
+			moveCommand.angular.z = 0;
+		}	
+	
 		cmdVelPublisher.publish(moveCommand);
 		rate.sleep();
 		getCurrentPose();
@@ -357,6 +432,22 @@ void Robot::moveForwardToPreciseLocation(Position targetPosition) {
 	moveCommand.linear.x = 0.1 * lowLinearSpeed;
 
 	while (ros::ok() && abs(currentValue - targetValue) > linearTolerance) {
+		if (abs(currentAngle - targetAngle) > rotationFixTolerance) {
+			stringstream fixRotationMsg;
+			fixRotationMsg << "Fixing angle #3";
+			Logger::getInstance().write(fixRotationMsg.str());
+			
+			setOptimalRotationDirection();
+			
+			if (turnLeft)
+				moveCommand.angular.z = rotationFixSpeed;
+			else
+				moveCommand.angular.z = -rotationFixSpeed;
+		}		
+		else {
+			moveCommand.angular.z = 0;
+		}			
+	
 		cmdVelPublisher.publish(moveCommand);
 		rate.sleep();
 		getCurrentPose();
@@ -387,6 +478,33 @@ float Robot::getAverageMovingForwardToCellTime() const {
 
 float Robot::getAverageMovingForwardToPositionTime() const {
 	return (totalMovingForwardToPositionTime / numOfStepsForwardToPosition) / 1000;
+}
+
+bool Robot::setOptimalRotationDirection(){
+	bool optimalLeft;
+	
+	//Determine optimal direction by calculating closest angle
+	if (targetAngle - currentAngle > 0 && targetAngle - currentAngle < M_PI)
+		optimalLeft = true;
+	else if (targetAngle - currentAngle < -M_PI)
+		optimalLeft = true;
+	else
+		optimalLeft = false;
+	
+	//Optimal direction has not changed
+	if((optimalLeft && turnLeft) || ((!optimalLeft) && (!turnLeft)))
+		return true;
+	//Optimal direction was right and changed to left
+	else if(optimalLeft && (!turnLeft))
+		turnLeft = true;
+	//Optimal direction was left and changed to right
+	else if((!optimalLeft) && turnLeft)
+		turnLeft = false;
+	
+	string newDirection = (turnLeft ? "left":"right");
+	ROS_INFO("Optimal direction changed.");
+	
+	return false;
 }
 
 Robot::~Robot() {

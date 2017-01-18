@@ -61,7 +61,7 @@
     <param name="map_frame_id" value="map"/>
     <param name="odom_frame_id" value="lizi_2_odom"/>
     <param name="base_frame_id" value="lizi_2_base_link"/>
-    <param name="max_particles" value="1000"/>
+ -a    <param name="max_particles" value="1000"/>
    </node>
 
   <param name="robot_width" value="0.4625" />

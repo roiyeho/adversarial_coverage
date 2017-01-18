@@ -28,6 +28,8 @@ private:
 	double linearTolerance;
 	double angularTolerance;
 	double minDistanceFromObstacles;
+	double rotationFixTolerance;
+	double rotationFixSpeed;
 
 	const Map &map;
 	int rows, cols;
@@ -40,6 +42,7 @@ private:
 	//Position initialPosition;
 	Position currentPosition;
 	double currentAngle;
+	double targetAngle;
 	Cell currentCell;
 	Direction currentDirection;
 	const char* directionNames[5];
@@ -51,6 +54,7 @@ private:
 	int numOf180DegreesTurns;
 	float totalTurningTime;
 	int numOfTurns;
+	bool turnLeft;
 
 	float totalMovingForwardToCellTime;
 	int numOfStepsForwardToCell;
@@ -71,6 +75,7 @@ private:
 	void moveForwardToPreciseLocation(Position targetPosition);
 	Position convertCellToPosition(Cell cell);
 	Direction findCurrentDirection() const;
+	bool setOptimalRotationDirection();
 
 public:
 	Robot(const Map &map);
